@@ -1,0 +1,159 @@
+// code to distinguish by credit card numbers
+
+#include <stdio.h>
+#include <cs50.h>
+#include <math.h>
+
+
+int main(void)
+
+
+{
+
+    long card_number;
+    int y;
+    int no_digits;
+    int j;
+    int total_end;
+    int count;
+    int w;
+
+
+
+    // y = log10(x) + 1;
+
+    card_number = get_long("Number: ");
+    no_digits = log10(card_number) + 1;                             // length of number
+    //printf("%i\n", no_digits);
+    int base = 10;                                                      // use 10 as the base for all indicies
+    int total_count = 0;                                                // the sum of the digits following the luhn algorithm. For the number to be valid, this must produce a number with final digit zero.
+                                                                        // lets find the 2nd last digit, then the 4rd last digit, moving from right to left
+
+
+    for (int power = 1; power < no_digits; power = power + 2)           // To find the last digit in an integer, divide the integer by 10^0, and the modulus 10. The second last digit will be the integer divided by10^1, and again, the modulus 10.
+    {
+        //printf("power %i",power);
+       // printf("base %i", base);
+        long card_number_divided = card_number / pow(base, power);      // the x value will potentially be very large, especially when divisible by 1, or 10, therefore we need data type 'long'
+       // printf("%ld\n",card_number_divided);                          // 'ld' represents data type 'long'
+
+        int digit = card_number_divided % 10;                           // find the modulus 10 of x. note that the data type is 'int', which will round floating point numbers down. To see this in action imagine finding the 2nd digit of 128. Divide by 10 = 12.8. 12 % 10
+        //printf("%i\n", digit);
+
+        int digit_2 = digit * 2;                                        // as above digit will display each integer value as we progress through the card_number from right to left. The Luhn algorithm requires that we multiply the digit by 2 ONLY FOR the series when we
+       // printf("%i\n",digit_2);                                        // start from the second to last digit. digits above 5 will now produce double digit integers. The Luhn algorithm does not allow you to simply add two digits, 13 & 1, but the double digit must be
+                                                                        // broken down so that 1 + 3 + 1 = 4 and NOT 13 + 1 = 14. We must create another loop to break down double digit values created by multiplying by 2.
+        if(digit_2 < 9)
+        {
+            total_count = total_count + digit_2;                          // all single digit integers may be added to the total count as normal
+            //printf("%i\n", digit_2);
+        }
+
+        else                                                            // for digits which have been transformed to double digit integers through multiplication by 2, we will run a similar loop, to create single digit integers again, and then add them to total_count
+        {
+            for (int i = 0; i < 2; i++)                                 // as the largest single digit that can be multiplied by 2 is 9, the largest value can only be 18, i.e. only double digit interests are present. The loop requires only two runs to break up the double
+                                                                        // digit integer
+            {
+                int digit_2_divided = digit_2 / pow(10 , i);            // effectively dividing by 1 and then by 10, finding the modulus 10 to work out the corresponding single digits (as above)
+                digit = digit_2_divided % 10;
+                //printf("%i\n", digit);
+                total_count = total_count + digit;                      // as before, add the single digit values to the running total.
+            }
+
+
+        }
+    }
+
+   // printf("Total Count 4 Integers Starting 2 From The End: %i\n", total_count);  // the above section only
+
+    //printf("\n");
+
+    for (int power = 0; power < no_digits; power = power + 2)                            // same format as above, only power starts at 0, and not one. i.e. we are dividing by 1 to start off with, in order to find the final digit, effectivily multiply the cardnumber by modulus ten to begin with
+    {
+        int z;
+
+        long card_number_divided = card_number / pow(base, power);                      // divide by 1, 10 100 etc. We can then take the mod 10 of this to get the digit
+        int digit = card_number_divided % 10;                                           // again its important that this is an 'int' value as it rounds the value down
+        total_count = total_count + digit;                                               // notice that the residual values (starting from the end) do not need to be multiplied by 2, as was the case above.
+    }
+
+    //printf("Total Count: %i\n",total_count);
+
+
+    int first_digit = card_number / pow(base, no_digits - 1);
+    //printf("first digit: %i\n", first_digit);
+
+    int second_digit = card_number / pow(base, no_digits - 2);
+    second_digit = second_digit % 10;
+    //printf("second digit: %i\n", second_digit);
+
+
+
+
+    if ((total_count % 10) == 0)
+    {
+        if (first_digit == 4)
+        {
+            if(no_digits == 13 || no_digits == 16)
+            {
+                printf("VISA\n");
+            }
+
+            else
+            {
+                printf("INVALID\n");
+            }
+        }
+
+        else if (first_digit == 5)
+        {
+            if(second_digit == 1 || second_digit == 2 || second_digit == 3 || second_digit == 4 || second_digit == 5)
+            {
+                if(no_digits == 16)
+                {
+                    printf("MASTERCARD\n");
+                }
+
+                else
+                {
+                    printf("INVALID\n");
+                }
+            }
+            else
+            {
+                printf("INVALID\n");
+            }
+        }
+
+        else if (first_digit == 3)
+        {
+            if(second_digit == 4 || second_digit == 7 )
+            {
+                if(no_digits == 15)
+                {
+                    printf("AMEX\n");
+                }
+
+                else
+                {
+                    printf("INVALID\n");
+                }
+            }
+            else
+            {
+                printf("INVALID\n");
+            }
+        }
+
+        else
+        {
+            printf("INVALID\n");
+        }
+    }
+
+    else
+    {
+        printf("INVALID\n");
+    }
+
+}
