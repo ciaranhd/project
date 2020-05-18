@@ -114,13 +114,13 @@ bool vote(int rank, string name, int ranks[])
 // Update preferences given one voter's ranks
 void record_preferences(int ranks[])
 {
-     for (int i = 0; i < candidate_count; i++)
-     {
-         for (int j = i + 1; j < candidate_count; j++)
-         {
-             preferences[ranks[i]][ranks[j]] = preferences[ranks[i]][ranks[j]] + 1;
-         }
-     }
+    for (int i = 0; i < candidate_count; i++)
+    {
+        for (int j = i + 1; j < candidate_count; j++)
+        {
+            preferences[ranks[i]][ranks[j]] = preferences[ranks[i]][ranks[j]] + 1;
+        }
+    }
     return;
 }
 
@@ -132,10 +132,11 @@ void add_pairs(void)
     {
         for (int j = 0; j < candidate_count; j++)
         {
-            if (preferences[i][j] > preferences[j][i])   // swap the i and j around. We are inverting the table to see if more people prefered alice over bob, compared with bob over alice. If yes, then we add the pair
+            // swap the i and j around. We are inverting the table to see if more people prefered alice over bob, compared with bob over alice. If yes, then we add the pair
+            if (preferences[i][j] > preferences[j][i])
             {
-
-                pairs[pair_count].winner = i; // This is telling us the INDEX value of the candidate that has won the pair. Therefore [2] would mean the THIRD candidate has won over say the first candidate (if j = 0), there is an EDGE between them
+                // This is telling us the INDEX value of the candidate that has won the pair. Therefore [2] would mean the THIRD candidate has won over say the first candidate (if j = 0), there is an EDGE between them
+                pairs[pair_count].winner = i;
                 pairs[pair_count].loser = j;
                 pair_count = pair_count + 1;
             }
@@ -187,51 +188,45 @@ void sort_pairs(void)
     return;
 }
 
-bool cycle_exists_helper(int index, bool visited[])
-{
-    if (visited[index])
-    {
-        return true;
-    }
-    visited[index] = true;
-    for (int i = 0; i < candidate_count; i++)
-    {
-        if(locked[index][i] == true)
-        {
-            if(cycle_exists_helper(i, visited))
-                return true;
-        }
-    }
-    return false;
-}
-
-
-bool cycle_exists(int starting_index)
-{
-    bool visited[candidate_count];
-    for (int i =0; i < candidate_count; i++)
-    {
-        visited[i] = false;
-    }
-    return cycle_exists_helper(starting_index, visited);
-}
-
-
-
 // Lock pairs into the candidate graph in order, without creating cycles
 void lock_pairs(void)
 {
+    int cycle_check_i = 0;
+    int cycle_check_j = 0;
+    //printf("%i\n", pair_count);
+
+
+    int total = 0;
     for (int i = 0; i < pair_count; i++)
     {
-        locked[pairs[i].winner][pairs[i].loser] = true;
-
-        // we need to check to see whether the direction above creates a cycle. If yes then undo
-
-        if(cycle_exists(i))
+        for (int j = 0; j < pair_count; j++)
         {
-            locked[pairs[i].winner][pairs[i].loser] = false;
+            total = total + locked[i][j];
+        }
+
+
+        if (!(cycle_check_i + pairs[i].winner == candidate_count && cycle_check_j + pairs[i].loser == candidate_count))
+        {
+            locked[pairs[i].winner][pairs[i].loser] = true;
+            cycle_check_i = cycle_check_i + pairs[i].winner;
+            cycle_check_j = cycle_check_j + pairs[i].loser;
         }
     }
+
+    /*
+
+    for (int i = 0; i < candidate_count; i++)
+    {
+        for (int j = 0; j < candidate_count; j++)
+        {
+            printf("%i", locked[i][j]);
+        }
+        printf("\n");
+    }
+    */
+
+    //printf("cycle check i: %i\n", cycle_check_i);
+    //printf("cycle check j: %i\n", cycle_check_j);
 
     return;
 }
@@ -242,7 +237,7 @@ void print_winner(void)
     for (int i = 0; i < candidate_count; i++)
     {
         int row_total = 0;
-        for(int j = 0; j < candidate_count; j++)
+        for (int j = 0; j < candidate_count; j++)
         {
             row_total = row_total + locked[i][j];
             if (row_total >= candidate_count - 1)
