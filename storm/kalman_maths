@@ -1,0 +1,57 @@
+import math
+import copy
+
+class SingleStateKalmanFilter(object):
+
+    def __init__(self, A, B, C, x, P, Q, R):
+        self.A = A  # Process dynamics
+        self.B = B  # Control dynamics
+        self.C = C  # Measurement dynamics
+        self.current_state_estimate = x  # Current state estimate
+        self.current_prob_estimate = P  # Current probability of state estimate
+        self.Q = Q  # Process covariance
+        self.R = R  # Measurement covariance
+
+    def store_variables(self):
+        return self.current_state_estimate, self.current_prob_estimate
+
+    def current_state(self):
+        return self.current_state_estimate
+
+    def step(self, control_input, measurement):
+        # Prediction step
+        predicted_state_estimate = self.A * self.current_state_estimate + self.B * control_input
+        #print(predicted_state_estimate)
+        predicted_prob_estimate = (self.A * self.current_prob_estimate) * self.A + self.Q
+        #print(predicted_prob_estimate)
+
+        if not math.isnan(measurement):
+            # Observation step
+            self.innovation = measurement - self.C * predicted_state_estimate
+            innovation_covariance = self.C * predicted_prob_estimate * self.C + self.R
+
+            # Update step
+            # The larger the Kalman Gain the less we trust our predicted output over the measurement
+            #   Reduce Innovation ---> Increase Kalman Gain
+            #   Increase self.C (Measurement Dynamics) --> Increase Kalman Gain
+            self.kalman_gain = predicted_prob_estimate * self.C * 1 / float(innovation_covariance)
+            self.current_state_estimate = predicted_state_estimate + self.kalman_gain * self.innovation
+
+            # eye(n) = nxn identity matrix.
+            self.current_prob_estimate = (1 - self.kalman_gain * self.C) * predicted_prob_estimate
+        else:
+            # Decide on whether the First Predicted State Estimate Should be 'predicted or self.current state!)
+            self.innovation = self.current_state_estimate - self.C * predicted_state_estimate
+            innovation_covariance = self.C * predicted_prob_estimate * self.C + self.R
+            self.kalman_gain = predicted_prob_estimate * self.C * 1 / float(innovation_covariance)
+            self.current_state_estimate = predicted_state_estimate + self.kalman_gain * self.innovation
+            # eye(n) = nxn identity matrix.
+            self.current_prob_estimate = (1 - self.kalman_gain * self.C) * predicted_prob_estimate
+
+
+
+            #self.current_state_estimate = copy.copy(predicted_state_estimate)
+            #self.current_prob_estimate = copy.copy(predicted_prob_estimate)
+
+
+
